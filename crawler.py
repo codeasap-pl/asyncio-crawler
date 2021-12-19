@@ -46,18 +46,20 @@ class Base(abc.ABC):
 
 
 class Worker(Base):
-    @abc.abstractmethod
-    async def _run(self, *args, **kwargs): ...
+    async def initialize(self, *args, **kwargs): ...
+    async def shutdown(self, *args, **kwargs): ...
 
     async def __call__(self, *args, **kwargs):
         self.logger.debug("Running")
-        await self._run(*args, **kwargs)
+        await self.initialize()
+        try:
+            await self._run(*args, **kwargs)
+        finally:
+            await self.shutdown()
         self.logger.debug("Done")
 
-
-class URL:
-    def __init__(self, url: str):
-        url = urlparse(url)
+    @abc.abstractmethod
+    async def _run(self, *args, **kwargs): ...
 
 
 class Cache(Base):
@@ -220,7 +222,7 @@ class Downloader(Worker):
                     self.logger.debug("SKIP: %s", fqdn)
                     continue
                 url, headers, content = await self.GET(job)
-                links = self.extract_urls(url, headers, content)
+                links = self.extract_urls(url, content, headers)
                 self.cache.store_links(links)
             except (asyncio.QueueEmpty, asyncio.TimeoutError) as e:
                 self.logger.debug("Nothing to do: %s", e)
@@ -257,7 +259,7 @@ class Downloader(Worker):
         finally:
             response.close() if not response.closed else ...
 
-    def extract_urls(self, url, headers, text):
+    def extract_urls(self, url, text, headers=None):
         headers = (headers or None)
         soup = bs4.BeautifulSoup(text, "html.parser")
         links = soup.find_all("a")
@@ -349,7 +351,7 @@ def list_broken_urls(db):
         print("%3d %s" % (r["status_code"], r["url"]))
 
 
-def setup_logging(color=False):
+def setup_logging(color=False) -> None:
     log_level = logging.DEBUG if args.debug else logging.INFO
     log_format = LOG_FORMAT_DEBUG if args.debug else LOG_FORMAT
     logging.basicConfig(level=log_level, format=log_format)
@@ -358,7 +360,7 @@ def setup_logging(color=False):
         coloredlogs.install(level=log_level, fmt=log_format)
 
 
-def create_parser():
+def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
 
     # Flags

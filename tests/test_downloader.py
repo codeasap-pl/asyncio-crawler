@@ -65,7 +65,7 @@ class TestDownloaderOperations(DownloaderTestCase):
             uri.lstrip("/")
         )
 
-    def test_extract_links(self):
+    def test_extract_urls(self):
         downloader = Downloader(
             self.stop_ev,
             self.cache,
@@ -78,7 +78,7 @@ class TestDownloaderOperations(DownloaderTestCase):
         links = ['<a href="%s"></a>' % p for p in paths]
 
         text = "<body>%s</body>" % "".join(links)
-        urls = downloader.extract_urls(page_url, {}, text)
+        urls = downloader.extract_urls(page_url, text)
         absurls = [urljoin(page_url, p) for p in paths]
         self.assertEqual(urls, absurls, "Returns absolute urls")
 
