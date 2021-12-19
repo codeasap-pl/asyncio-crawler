@@ -1,0 +1,8 @@
+.venv/
+.ignore/
+__pycache__/
+.coverage
+*#*
+
+# doxygen
+docs/html
