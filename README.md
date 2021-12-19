@@ -2,7 +2,7 @@
 
 ## Python: educational asyncio crawler
 
-[blog.codeasap.pl](https://blog.codeasap.pl/)
+[blog.codeasap.pl](https://blog.codeasap.pl/posts/crawler/1-setup/)
 
 python3, asyncio, aiohttp, sqlite3, BeautifulSoup (bs4)
 
