@@ -27,7 +27,7 @@ test: pep8
 	python3 -m unittest discover -v .
 
 test-pytest: pep8
-	pytest -vs -n 4 tests
+	pytest -vs tests
 
 coverage: dirs
 	coverage run -m unittest discover -vs .
