@@ -385,8 +385,8 @@ def create_parser() -> argparse.ArgumentParser:
     # Scheduler
     scheduler = parser.add_argument_group("Scheduler")
     scheduler.add_argument(
-        "-i", "--max-idle-sec", type=int,
-        help="Exit if idle for N seconds (default %d)" % DEFAULT_MAX_IDLE_SEC,
+        "-i", "--max-idle-sec", type=float,
+        help="Exit if idle for N seconds (default %f)" % DEFAULT_MAX_IDLE_SEC,
         default=DEFAULT_MAX_IDLE_SEC,
     )
     scheduler.add_argument(
@@ -396,7 +396,7 @@ def create_parser() -> argparse.ArgumentParser:
     )
     scheduler.add_argument(
         "-t", "--schedule-interval-sec", type=float,
-        help="Scheduling interval (default: %d)" % (
+        help="Scheduling interval (default: %f)" % (
             DEFAULT_SCHEDULING_INTERVAL_SEC,
         ),
         default=DEFAULT_SCHEDULING_INTERVAL_SEC,
@@ -410,21 +410,19 @@ def create_parser() -> argparse.ArgumentParser:
         default=DEFAULT_CONCURRENCY,
     )
     downloader.add_argument(
-        "-s", "--size-limit-kb", type=int,
+        "-s", "--size-limit-kb", type=float,
         help="Download size limit (default: %f)" % DEFAULT_SIZE_LIMIT_KB,
         default=DEFAULT_SIZE_LIMIT_KB,
     )
-
-    downloader.add_argument(
-        "-w", "--whitelist", action="append",
-        metavar="DOMAIN",
-        help="Allow http GET from this domain",
-    )
-
     downloader.add_argument(
         "-u", "--user-agent", type=str,
         help="User-Agent header (default: %s)" % DEFAULT_USER_AGENT,
         default=DEFAULT_USER_AGENT,
+    )
+    downloader.add_argument(
+        "-w", "--whitelist", action="append",
+        metavar="DOMAIN",
+        help="Allow http GET from this domain",
     )
 
     # Positional
