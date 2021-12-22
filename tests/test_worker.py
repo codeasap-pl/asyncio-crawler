@@ -6,8 +6,9 @@ import logging
 
 
 class MyWorker(Worker):
-    async def _run(self, *args, **kwargs):
-        pass
+    async def initialize(self, *args, **kwargs): ...
+    async def shutdown(self, *args, **kwargs): ...
+    async def _run(self, *args, **kwargs): ...
 
 
 class TestWorker(BaseTestCase):
@@ -31,15 +32,40 @@ class TestWorker(BaseTestCase):
         obj = MyWorker()
         self.assertTrue(callable(obj), "Implements __call__")
 
+
+class TestCallOperator(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.postitional_args = (1, 2, "test", None, ["abc"])
+        self.keyword_args = {"one": 1, "two": 2}
+
+    async def test_initialize(self):
+        obj = MyWorker()
+        obj.initialize = AsyncMock()
+        await obj(*self.postitional_args, **self.keyword_args)
+        self.assertEqual(obj.initialize.call_count, 1, "Calls initialize()")
+        obj.initialize.assert_called_once_with(
+            *self.postitional_args,
+            **self.keyword_args,
+        )
+
+    async def test_shutdown(self):
+        obj = MyWorker()
+        obj.shutdown = AsyncMock()
+        await obj(*self.postitional_args, **self.keyword_args)
+        self.assertEqual(obj.shutdown.call_count, 1, "Calls shutdown()")
+        obj.shutdown.assert_called_once_with(
+            *self.postitional_args,
+            **self.keyword_args,
+        )
+
     async def test_run(self):
         obj = MyWorker()
         obj._run = AsyncMock()
-        postitional_args = ("foo", "bar", 7, 9, 13)
-        keyword_args = dict(something=17)
 
         # calling object (__call__) calls run()
         with self.assertLogs(level=logging.DEBUG) as logs:
-            await obj(*postitional_args, **keyword_args)
+            await obj(*self.postitional_args, **self.keyword_args)
 
         # check logs
         self.assertEqual(len(logs), 2)
@@ -52,6 +78,14 @@ class TestWorker(BaseTestCase):
 
         # check all passed arguments
         obj._run.assert_called_once_with(
-            *postitional_args,
-            **keyword_args,
+            *self.postitional_args,
+            **self.keyword_args,
         )
+
+    async def test_run_retval(self):
+        value = "Hello"
+        obj = MyWorker()
+        obj._run = AsyncMock()
+        obj._run.return_value = value
+        retval = await obj()
+        self.assertEqual(retval, value, "Returned valued")

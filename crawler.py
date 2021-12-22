@@ -51,12 +51,14 @@ class Worker(Base):
 
     async def __call__(self, *args, **kwargs):
         self.logger.debug("Running")
-        await self.initialize()
+        await self.initialize(*args, **kwargs)
+        result = None
         try:
-            await self._run(*args, **kwargs)
+            result = await self._run(*args, **kwargs)
         finally:
-            await self.shutdown()
+            await self.shutdown(*args, **kwargs)
         self.logger.debug("Done")
+        return result
 
     @abc.abstractmethod
     async def _run(self, *args, **kwargs): ...
