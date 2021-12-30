@@ -24,9 +24,8 @@ class TestWorker(BaseTestCase):
     def test_logger(self):
         with self.assertLogs(level=logging.DEBUG) as logs:
             MyWorker()
-        self.assertEqual(len(logs), 2)
-        names = set([r.name for r in logs.records])
-        self.assertEqual(names, set(["MyWorker"]), "Logger name")
+        self.assertEqual(len(logs.records), 1)
+        self.assertEqual(logs.records[0].name, "MyWorker", "Logger name")
 
     def test_callable(self):
         obj = MyWorker()
@@ -58,6 +57,17 @@ class TestCallOperator(BaseTestCase):
             *self.postitional_args,
             **self.keyword_args,
         )
+
+    async def test_shutdown_guarantee(self):
+        obj = MyWorker()
+        obj._run = AsyncMock()
+        obj._run.side_effect = SyntaxError
+        obj.shutdown = AsyncMock()
+
+        with self.assertRaises(SyntaxError):
+            await obj(*self.postitional_args, **self.keyword_args)
+
+        self.assertEqual(obj.shutdown.call_count, 1, "Calls shutdown()")
 
     async def test_run(self):
         obj = MyWorker()
