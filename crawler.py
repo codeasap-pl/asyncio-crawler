@@ -10,6 +10,7 @@ import logging
 import signal
 import sqlite3
 import time
+import typing as T
 from urllib.parse import (
     urlparse,
     urljoin,
@@ -90,13 +91,16 @@ class Cache(Base):
         cur.execute(schema)
         cur.connection.commit()
 
-    def store_links(self, links):
+    def store_links(self, links: list[str]):
         stmt = "INSERT INTO urls(url) VALUES(?) ON CONFLICT(url) DO NOTHING"
         cur = self.db.cursor()
         cur.executemany(stmt, [(link,) for link in links])
         cur.connection.commit()
 
-    def store_response(self, url, status_code=None, headers=None):
+    def store_response(self,
+                       url: str,
+                       status_code: T.Optional[int] = None,
+                       headers: T.Optional[dict] = None):
         headers = (headers or {})
         stmt = (
             """

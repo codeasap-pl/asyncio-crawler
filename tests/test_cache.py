@@ -3,6 +3,7 @@ from .testing import BaseTestCase
 
 import logging
 import sqlite3
+import time
 
 
 class TestCacheBasics(BaseTestCase):
@@ -62,7 +63,7 @@ class TestCacheOperations(BaseTestCase):
             self.assertIsNotNone(r["ctime"], "ctime has a timestamp")
             # check expected null_fields are NULL
             for field in null_fields:
-                self.assertIsNone(r[field], "Expexted NULL: %s" % field)
+                self.assertIsNone(r[field], "Expected NULL: %s" % field)
 
     def test_store_links_duplicates(self):
         """Checks if store_links() ignores already existing links"""
@@ -119,7 +120,13 @@ class TestCacheOperations(BaseTestCase):
             "Stores size (content-length)"
         )
 
+        self.assertTrue(r["mtime"], "mtime updated")
+
+        last_mtime = r["mtime"]
+
         # SECOND TIME /update/
+        time.sleep(1)  # mtime has to be "later"
+
         response["headers"].update({
             "content-type": "application/xml",
             "content-length": 234,
@@ -144,3 +151,5 @@ class TestCacheOperations(BaseTestCase):
             response["headers"]["content-length"],
             "Stores size (content-length)"
         )
+
+        self.assertNotEqual(r["mtime"], last_mtime, "mtime updated")
