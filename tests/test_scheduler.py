@@ -29,8 +29,7 @@ class TestSchedulerOperations(WorkerTestCase):
                               result_queue,
                               /,
                               timeout=1,
-                              total_expected=-1
-                              ):
+                              total_expected=-1):
         while not stop_ev.is_set():
             if result_queue.qsize() == total_expected:
                 break
@@ -38,7 +37,7 @@ class TestSchedulerOperations(WorkerTestCase):
                 job = await asyncio.wait_for(url_queue.get(), timeout=timeout)
                 url_queue.task_done()
                 result_queue.put_nowait(job)
-            except (asyncio.QueueEmpty, asyncio.TimeoutError):
+            except asyncio.TimeoutError:
                 pass
 
     async def test_stop_when_idle(self):
@@ -91,8 +90,10 @@ class TestSchedulerOperations(WorkerTestCase):
         try:
             job = await asyncio.wait_for(url_queue.get(), timeout=1)
             self.assertEqual(job["url"], url, "Queued url")
-            self.stop_ev.set()
+        except (asyncio.TimeoutError, asyncio.CancelledError):
+            self.fail("Scheduler does not enqueue URLs.")
         finally:
+            self.stop_ev.set()
             await task
 
     async def test_scheduling(self):
@@ -206,6 +207,8 @@ class TestSchedulerOperations(WorkerTestCase):
             result_queue.get_nowait()
             result_queue.task_done()
             self.stop_ev.set()
-            await scheduler_task
         except asyncio.TimeoutError as e:
             self.fail("Scheduling is broken (aged tasks): %r" % e)
+        finally:
+            await scheduler_task
+            await consumer_task
